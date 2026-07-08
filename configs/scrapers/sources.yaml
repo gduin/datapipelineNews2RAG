@@ -1,29 +1,72 @@
 sources:
-  - id: reuters_world
+  # --- Top Tier Financial News ---
+  - id: reuters_business_finance
     type: rss
-    url: https://feeds.reuters.com/reuters/worldNews
+    url: https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best
     schedule_cron: "*/5 * * * *"
     language: en
-    tags: [world, reuters]
+    tags: [finance, reuters]
 
-  - id: guardian_world
+  - id: cnbc_economy
     type: rss
-    url: https://www.theguardian.com/world/rss
-    schedule_cron: "*/5 * * * *"
-    language: en
-    tags: [world, guardian]
-
-  - id: hn_top
-    type: rss
-    url: https://hnrss.org/frontpage
+    url: https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258
     schedule_cron: "*/10 * * * *"
     language: en
-    tags: [tech, hackernews]
+    tags: [economy, markets, cnbc]
+
+  - id: cnbc_finance
+    type: rss
+    url: https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114
+    schedule_cron: "*/10 * * * *"
+    language: en
+    tags: [finance, cnbc]
+
+  - id: wsj_markets
+    type: rss
+    url: https://feeds.content.dowjones.io/public/rss/SB10001424053111904265604576568501414158780
+    schedule_cron: "*/15 * * * *"
+    language: en
+    tags: [markets, wsj]
+
+  - id: marketwatch_topstories
+    type: rss
+    url: https://feeds.content.dowjones.io/public/rss/mw_topstories
+    schedule_cron: "*/10 * * * *"
+    language: en
+    tags: [markets, marketwatch]
+
+  - id: yahoo_finance
+    type: rss
+    url: https://finance.yahoo.com/news/rssindex
+    schedule_cron: "*/5 * * * *"
+    language: en
+    tags: [finance, yahoo]
+
+  - id: investing_economy
+    type: rss
+    url: https://www.investing.com/rss/news_25.rss
+    schedule_cron: "*/15 * * * *"
+    language: en
+    tags: [economy, investing]
+
+  - id: economist_finance
+    type: rss
+    url: https://www.economist.com/finance-and-economics/rss.xml
+    schedule_cron: "*/30 * * * *"
+    language: en
+    tags: [economy, economist]
+
+  - id: forbes_business
+    type: rss
+    url: https://www.forbes.com/business/feed/
+    schedule_cron: "*/15 * * * *"
+    language: en
+    tags: [business, forbes]
 
 scraping:
-  user_agent: "NewsRAGBot/1.0"
-  rate_limit_rps: 2
-  http_timeout: 30
+  user_agent: "Mozilla/5.0 (compatible; NewsRAGBot/1.0; +https://example.com/bot)"
+  rate_limit_rps: 1  # Be polite to servers
+  http_timeout: 20
   max_retries: 3
   backoff_seconds: 5
 

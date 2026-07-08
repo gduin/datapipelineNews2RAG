@@ -12,8 +12,8 @@ down: ## Stop all services
 logs: ## Tail logs
 	docker compose logs -f --tail=100
 
-run-scraper: ## Run scrapers locally
-	python -m src.scrapers.main --config configs/scrapers/sources.yaml
+run-scraper: ## Run scrapers in Docker (long-running daemon)
+	docker compose up -d scraper
 
 run-pipeline: ## Submit Flink job
 	./scripts/run_pipeline.sh

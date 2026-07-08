@@ -80,6 +80,19 @@ services:
       echo 'Topics created.'
       "
 
+  scraper:
+    build:
+      context: .
+      dockerfile: infra/scrapers/Dockerfile
+    env_file: .env
+    depends_on:
+      - kafka-1
+      - kafka-2
+      - kafka-3
+    restart: on-failure
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.1
     depends_on: [kafka-1]
@@ -92,7 +105,7 @@ services:
 
   flink-jobmanager:
     image: flink:1.18.1-java17
-    ports: ["8082:8081"]
+    ports: ["8083:8081"]
     command: jobmanager
     environment:
       FLINK_CONF: /opt/flink/conf/flink-conf.yaml
