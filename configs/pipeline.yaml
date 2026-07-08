@@ -1,0 +1,36 @@
+pipeline:
+  name: news-rag-ingestion
+  parallelism: 4
+  checkpoint_interval_ms: 60000
+  restart_strategy: exponential-delay
+
+source:
+  topic: ${KAFKA_NEWS_TOPIC}
+  group_id: ${KAFKA_CONSUMER_GROUP}
+  start_offset: latest
+  avro_schema: schemas/avro/news_raw.avsc
+
+transformations:
+  - type: normalize
+  - type: deduplicate
+    key: url
+    state_ttl_hours: 72
+  - type: clean_html
+  - type: language_detect
+    allowed: [en, es, fr, de]
+  - type: chunk
+    strategy: sentence
+    max_tokens: 512
+    overlap_tokens: 64
+
+embeddings:
+  provider: ${EMBEDDING_PROVIDER}
+  model: ${EMBEDDING_MODEL}
+  batch_size: 32
+
+sink:
+  type: qdrant
+  url: ${QDRANT_URL}
+  collection: ${QDRANT_COLLECTION}
+  write_mode: upsert
+  id_field: chunk_id

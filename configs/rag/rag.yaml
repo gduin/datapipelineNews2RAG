@@ -1,0 +1,17 @@
+retrieval:
+  top_k: 5
+  score_threshold: 0.65
+  filters:
+    language: en
+
+generation:
+  max_tokens: 1024
+  temperature: 0.2
+  system_prompt: |
+    You are a news analyst. Answer user questions using ONLY the provided context.
+    Cite source URLs. If the context is insufficient, say "I don't have enough information."
+
+vector_store:
+  collection: ${QDRANT_COLLECTION}
+  vector_size: ${QDRANT_VECTOR_SIZE}
+  distance: Cosine

@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "NewsRaw",
+  "namespace": "com.newsrag",
+  "fields": [
+    {"name": "source_id", "type": "string"},
+    {"name": "url", "type": "string"},
+    {"name": "title", "type": ["null","string"], "default": null},
+    {"name": "summary", "type": ["null","string"], "default": null},
+    {"name": "content", "type": ["null","string"], "default": null},
+    {"name": "author", "type": ["null","string"], "default": null},
+    {"name": "published_at", "type": ["null","long"], "default": null},
+    {"name": "language", "type": ["null","string"], "default": null},
+    {"name": "tags", "type": {"type":"array","items":"string"}, "default": []},
+    {"name": "fetched_at", "type": "long"}
+  ]
+}

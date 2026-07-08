@@ -1,0 +1,35 @@
+sources:
+  - id: reuters_world
+    type: rss
+    url: https://feeds.reuters.com/reuters/worldNews
+    schedule_cron: "*/5 * * * *"
+    language: en
+    tags: [world, reuters]
+
+  - id: guardian_world
+    type: rss
+    url: https://www.theguardian.com/world/rss
+    schedule_cron: "*/5 * * * *"
+    language: en
+    tags: [world, guardian]
+
+  - id: hn_top
+    type: rss
+    url: https://hnrss.org/frontpage
+    schedule_cron: "*/10 * * * *"
+    language: en
+    tags: [tech, hackernews]
+
+scraping:
+  user_agent: "NewsRAGBot/1.0"
+  rate_limit_rps: 2
+  http_timeout: 30
+  max_retries: 3
+  backoff_seconds: 5
+
+kafka:
+  bootstrap_servers: ${KAFKA_BOOTSTRAP_SERVERS}
+  topic: ${KAFKA_NEWS_TOPIC}
+  acks: all
+  enable_idempotence: true
+  compression_type: zstd

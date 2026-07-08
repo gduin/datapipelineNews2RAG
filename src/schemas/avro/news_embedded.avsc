@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "NewsEmbedded",
+  "namespace": "com.newsrag",
+  "fields": [
+    {"name": "chunk_id", "type": "string"},
+    {"name": "url", "type": "string"},
+    {"name": "title", "type": ["null","string"], "default": null},
+    {"name": "chunk_text", "type": "string"},
+    {"name": "chunk_index", "type": "int"},
+    {"name": "total_chunks", "type": "int"},
+    {"name": "embedding", "type": {"type":"array","items":"float"}},
+    {"name": "language", "type": ["null","string"], "default": null},
+    {"name": "published_at", "type": ["null","long"], "default": null},
+    {"name": "source_id", "type": "string"},
+    {"name": "tags", "type": {"type":"array","items":"string"}, "default": []}
+  ]
+}

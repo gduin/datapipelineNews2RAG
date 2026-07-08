@@ -1,0 +1,6 @@
++-----------+     +------------+      +-------------+      +---------+
+| Scrapers  | --> | Kafka KRaft| ---> | PyFlink Job | ---> | Qdrant  |
++-----------+     +------------+      +-------------+      +---------+
+                        |                     |                 |
+                        v                     v                 v
+                 Schema Registry      news.embedded       RAG API
