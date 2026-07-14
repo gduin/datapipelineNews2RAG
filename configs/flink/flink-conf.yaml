@@ -1,4 +1,4 @@
-jobmanager.rpc.address: flink-jobmanager
+jobmanager.rpc.address: 2c6f251b5d01
 jobmanager.rpc.port: 6123
 jobmanager.memory.process.size: 2048m
 taskmanager.memory.process.size: 4096m
@@ -14,3 +14,5 @@ restart-strategy: exponential-delay
 restart-strategy.exponential-delay.initial-backoff: 10s
 restart-strategy.exponential-delay.max-backoff: 5min
 restart-strategy.exponential-delay.reset-backoff-threshold: 1h
+blob.server.port: 6124
+query.server.port: 6125

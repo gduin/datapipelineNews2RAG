@@ -13,7 +13,7 @@ Real-time news ingestion → Kafka → PyFlink → Embeddings → Qdrant → RAG
 ## Quickstart
 ```bash
 make up            # spin up Kafka (KRaft), Flink, Qdrant, Schema Registry
-make run-scraper   # launch RSS scrapers
+make run-scraper   # launch scraper Docker container
 make run-pipeline  # submit Flink job
 make rag-api       # start FastAPI RAG endpoint
 make test

@@ -19,14 +19,21 @@ services:
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       KAFKA_NUM_PARTITIONS: 12
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
-      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      CLUSTER_ID: news-rag-cluster
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2GD'
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka-1:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
     volumes:
       - kafka-1-data:/var/lib/kafka/data
+    networks: 
+      - news-rag-net
 
   kafka-2:
     image: confluentinc/cp-kafka:7.6.1
@@ -42,9 +49,16 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /var/lib/kafka/data
-      CLUSTER_ID: news-rag-cluster
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2GD'
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka-2:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
     volumes:
       - kafka-2-data:/var/lib/kafka/data
+    networks: 
+      - news-rag-net
 
   kafka-3:
     image: confluentinc/cp-kafka:7.6.1
@@ -60,41 +74,80 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /var/lib/kafka/data
-      CLUSTER_ID: news-rag-cluster
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2GD'
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka-3:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
     volumes:
       - kafka-3-data:/var/lib/kafka/data
-
+    networks: 
+      - news-rag-net
+      
   kafka-init:
     image: confluentinc/cp-kafka:7.6.1
-    depends_on: [kafka-1, kafka-2, kafka-3]
-    entrypoint: ["/bin/sh","-c"]
-    command: |
-      "
-      kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists \
-        --topic news.raw --partitions 12 --replication-factor 3 \
-        --config cleanup.policy=delete --config retention.ms=604800000
-      kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists \
-        --topic news.embedded --partitions 12 --replication-factor 3
-      kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists \
-        --topic news.dlq --partitions 3 --replication-factor 3
-      echo 'Topics created.'
-      "
+    depends_on:
+      kafka-1:
+        condition: service_healthy
+      # kafka-2:
+      #   condition: service_healthy
+      # kafka-3:
+      #   condition: service_healthy
+    # entrypoint: ["/bin/bash", "-c"]
+    command:
+      - /bin/bash
+      - -c
+      - |
+        kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic news.dlq --partitions 3 --replication-factor 3
+        kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic news.raw --partitions 12 --replication-factor 3
+        kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic news.embedded --partitions 12 --replication-factor 3
+        echo '✅ Topics created'
+    networks: 
+      - news-rag-net
+    # entrypoint: ["/bin/bash","-c"]
+    # command: |
+    #   kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic ip-geo-e --partitions 4 --replication-factor 1
+    #   kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic news_dlq --partitions 3 --replication-factor 3
+    #   kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic news_raw --partitions 12 --replication-factor 3
+    #   kafka-topics --bootstrap-server kafka-1:9092 --create --if-not-exists --topic news_embedded --partitions 12 --replication-factor 3 
+    #   echo '✅ Topics created'
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    # networks: [news-rag-net]
+    ports:
+      - "8118:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      KAFKA_CLUSTERS_0_NAME: local
+    networks: 
+      - news-rag-net
 
   scraper:
     build:
       context: .
       dockerfile: infra/scrapers/Dockerfile
+    container_name: scraper
     env_file: .env
     depends_on:
-      - kafka-1
-      - kafka-2
-      - kafka-3
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
+        condition: service_healthy
     restart: on-failure
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+    networks: 
+      - news-rag-net
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.1
+    container_name: schema-registry
     depends_on: [kafka-1]
     ports: ["8081:8081"]
     environment:
@@ -102,57 +155,111 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka-1:9092
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
+    networks: 
+      - news-rag-net
+
 
   flink-jobmanager:
     image: flink:1.18.1-java17
+    container_name: flink-jobmanager
     ports: ["8083:8081"]
     command: jobmanager
     environment:
       FLINK_CONF: /opt/flink/conf/flink-conf.yaml
     volumes:
-      - ./configs/flink/flink-conf.yaml:/opt/flink/conf/flink-conf.yaml:ro
+      - ./configs/flink:/opt/flink/conf
       - flink-checkpoints:/flink-checkpoints
       - flink-savepoints:/flink-savepoints
+    networks: 
+      - news-rag-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
 
   flink-taskmanager:
     image: flink:1.18.1-java17
+    #container_name: flink-taskmanager
     command: taskmanager
     depends_on: [flink-jobmanager]
     environment:
       TASKMANAGER_NUMTASKSLOTS: 4
     volumes:
-      - ./configs/flink/flink-conf.yaml:/opt/flink/conf/flink-conf.yaml:ro
+      - ./configs/flink:/opt/flink/conf
       - flink-checkpoints:/flink-checkpoints
     deploy:
       replicas: 3
+    networks: 
+      - news-rag-net
+
+  flink-job:
+    build:
+      context: .
+      dockerfile: infra/flink-job/Dockerfile
+    container_name: flink-job
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+      scraper:
+        condition: service_started
+    volumes:
+      - ./src:/opt/flink-job/src
+    networks: 
+      - news-rag-net
+    working_dir: /opt/flink-job
+    command:
+      - /bin/bash
+      - -c
+      - |
+        sleep 25
+        echo '▶ Submitting PyFlink sessionization job...'
+        /opt/flink/bin/flink run -m flink-jobmanager:8081 -py /opt/flink-job/src/pipeline/flink_job.py -p 4
+    #     flink run -m flink-jobmanager:8081 -py /opt/flink-job/flink_job.py -c src.pipeline.flink_job:main -p 4
 
   qdrant:
     image: qdrant/qdrant:v1.10.1
     ports: ["6333:6333","6334:6334"]
-    volumes:
-      - qdrant-data:/qdrant/storage
+    container_name: qdrant
     environment:
       QDRANT__SERVICE__GRPC_PORT: 6334
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks: 
+      - news-rag-net
 
   rag-api:
     build:
       context: .
       dockerfile: infra/rag/Dockerfile
     ports: ["8000:8000"]
+    container_name: rag-api
     env_file: .env
     depends_on: [qdrant, kafka-1]
+    networks: 
+      - news-rag-net
 
   prometheus:
     image: prom/prometheus:v2.53.0
+    container_name: prometheus
     ports: ["9090:9090"]
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks: 
+      - news-rag-net
 
   grafana:
     image: grafana/grafana:11.1.0
+    container_name: grafana
     ports: ["3000:3000"]
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
+    networks: 
+      - news-rag-net
+
+networks:
+  news-rag-net:
+    driver: bridge
 
 volumes:
   kafka-1-data:

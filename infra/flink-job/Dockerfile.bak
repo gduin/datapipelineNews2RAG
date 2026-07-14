@@ -1,0 +1,34 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    default-jdk \
+    wget \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && wget -q https://archive.apache.org/dist/flink/flink-1.18.1/flink-1.18.1-bin-scala_2.12.tgz -O /tmp/flink.tgz \
+    && tar -xzf /tmp/flink.tgz -C /opt \
+    && ln -s /opt/flink-1.18.1 /opt/flink \
+    && pip install --no-cache-dir \
+        pydantic \
+        structlog \
+        pyyaml \
+        pydantic-settings \
+        beautifulsoup4 \
+        lxml \
+        feedparser \
+        tenacity \
+        qdrant-client \
+        openai \
+        sentence-transformers \
+    && wget -q https://repo1.maven.org/maven2/org/apache/flink/flink-connector-kafka/3.0.1-1.18/flink-connector-kafka-3.0.1-1.18.jar -O /opt/flink/lib/flink-connector-kafka.jar \
+    && wget -q https://repo1.maven.org/maven2/org/apache/flink/flink-clients_2.12/1.18.1/flink-clients_2.12-1.18.1.jar -O /opt/flink/lib/flink-clients.jar
+
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV PATH="/opt/flink/bin:${PATH}"
+ENV PYTHONPATH="/opt/flink-job:${PYTHONPATH}"
+
+COPY src ./src
+COPY configs ./configs
+COPY pyproject.toml ./
+
+CMD ["flink", "--help"]

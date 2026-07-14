@@ -2,7 +2,7 @@ sources:
   # --- Top Tier Financial News ---
   - id: reuters_business_finance
     type: rss
-    url: https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best
+    url: https://reutersagency.com/feed/?best-topics=business-finance&post_type=best
     schedule_cron: "*/5 * * * *"
     language: en
     tags: [finance, reuters]
