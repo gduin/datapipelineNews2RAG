@@ -160,7 +160,9 @@ services:
 
 
   flink-jobmanager:
-    image: flink:1.18.1-java17
+    build:
+      context: .
+      dockerfile: infra/flink/Dockerfile
     container_name: flink-jobmanager
     ports: ["8083:8081"]
     command: jobmanager
@@ -179,7 +181,9 @@ services:
       retries: 10
 
   flink-taskmanager:
-    image: flink:1.18.1-java17
+    build:
+      context: .
+      dockerfile: infra/flink/Dockerfile
     #container_name: flink-taskmanager
     command: taskmanager
     depends_on: [flink-jobmanager]
@@ -198,6 +202,10 @@ services:
       context: .
       dockerfile: infra/flink-job/Dockerfile
     container_name: flink-job
+    env_file: .env
+    environment:
+      - PYTHONPATH=/opt/flink-job
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-1:9092,kafka-2:9092,kafka-3:9092
     depends_on:
       flink-jobmanager:
         condition: service_healthy
@@ -205,6 +213,7 @@ services:
         condition: service_started
     volumes:
       - ./src:/opt/flink-job/src
+      - ./.env:/opt/flink-job/.env:ro
     networks: 
       - news-rag-net
     working_dir: /opt/flink-job

@@ -69,6 +69,7 @@ class ProcessFunction(MapFunction):
 
 def main() -> None:
     settings = get_settings()
+    print(settings)
     configure_logging(settings.log_level)
     env = StreamExecutionEnvironment.get_execution_environment()
     config = PipelineConfig(
