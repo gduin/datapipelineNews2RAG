@@ -1,6 +1,6 @@
 pipeline:
   name: news-rag-ingestion
-  parallelism: 4
+  parallelism: 2
   checkpoint_interval_ms: 60000
   restart_strategy: exponential-delay
 

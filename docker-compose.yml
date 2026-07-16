@@ -188,12 +188,12 @@ services:
     command: taskmanager
     depends_on: [flink-jobmanager]
     environment:
-      TASKMANAGER_NUMTASKSLOTS: 4
+      TASKMANAGER_NUMTASKSLOTS: 2
     volumes:
       - ./configs/flink:/opt/flink/conf
       - flink-checkpoints:/flink-checkpoints
     deploy:
-      replicas: 3
+      replicas: 1
     networks: 
       - news-rag-net
 

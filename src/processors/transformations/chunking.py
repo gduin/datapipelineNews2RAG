@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 
+from src.common.logging import get_logger
 from src.processors.base import ChunkStep
 from src.schemas.models import NewsChunk, NewsItem
+
+log = logging.getLogger(__name__)
 
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
@@ -20,48 +24,61 @@ class SentenceChunker(ChunkStep):
         return len(text.split())
 
     def process(self, item: NewsItem) -> list[NewsChunk] | None:
+        logger = get_logger(__name__)
         text = item.content or item.summary or item.title
         if not text:
+            logger.debug("chunk_no_text", url=item.url)
             return None
 
-        sentences = _SENTENCE_END.split(text)
-        chunks: list[str] = []
-        current: list[str] = []
-        current_len = 0
+        try:
+            sentences = _SENTENCE_END.split(text)
+            chunks: list[str] = []
+            current: list[str] = []
+            current_len = 0
 
-        for sent in sentences:
-            sent_len = self._approx_tokens(sent)
-            if current and current_len + sent_len > self._max:
+            for sent in sentences:
+                sent_len = self._approx_tokens(sent)
+                if current and current_len + sent_len > self._max:
+                    chunks.append(" ".join(current))
+                    # overlap: keep last sentences within overlap budget
+                    tail: list[str] = []
+                    acc = 0
+                    for s in reversed(current):
+                        if acc + self._approx_tokens(s) > self._overlap:
+                            break
+                        tail.insert(0, s)
+                        acc += self._approx_tokens(s)
+                    current = tail + [sent]
+                    current_len = acc + sent_len
+                else:
+                    current.append(sent)
+                    current_len += sent_len
+
+            if current:
                 chunks.append(" ".join(current))
-                # overlap: keep last sentences within overlap budget
-                tail: list[str] = []
-                acc = 0
-                for s in reversed(current):
-                    if acc + self._approx_tokens(s) > self._overlap:
-                        break
-                    tail.insert(0, s)
-                    acc += self._approx_tokens(s)
-                current = tail + [sent]
-                current_len = acc + sent_len
-            else:
-                current.append(sent)
-                current_len += sent_len
 
-        if current:
-            chunks.append(" ".join(current))
-
-        return [
-            NewsChunk(
-                chunk_id=hashlib.sha1(f"{item.url}#{i}".encode()).hexdigest(),
+            result = [
+                NewsChunk(
+                    chunk_id=hashlib.sha1(f"{item.url}#{i}".encode()).hexdigest(),
+                    url=item.url,
+                    title=item.title,
+                    chunk_text=chunk,
+                    chunk_index=i,
+                    total_chunks=len(chunks),
+                    language=item.language,
+                    published_at=item.published_at,
+                    source_id=item.source_id,
+                    tags=item.tags,
+                )
+                for i, chunk in enumerate(chunks)
+            ]
+            logger.debug(
+                "chunk_success",
                 url=item.url,
-                title=item.title,
-                chunk_text=chunk,
-                chunk_index=i,
+                chunk_count=len(result),
                 total_chunks=len(chunks),
-                language=item.language,
-                published_at=item.published_at,
-                source_id=item.source_id,
-                tags=item.tags,
             )
-            for i, chunk in enumerate(chunks)
-        ]
+            return result
+        except Exception:
+            logger.error("chunk_failed", url=item.url, exc_info=True)
+            return None
