@@ -40,9 +40,13 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
 
     # LLM
-    llm_provider: Literal["openai", "anthropic"] = "openai"
+    llm_provider: Literal["openai", "anthropic", "stub", "llamacpp"] = "openai"
     llm_model: str = "gpt-4o-mini"
     llm_temperature: float = 0.2
+    # OpenAI-compatible base URL. Used by openai and llamacpp providers.
+    # For llama.cpp: http://llama-server:8080/v1
+    # Empty = fall back to OpenAI default (https://api.openai.com/v1).
+    llm_base_url: str = ""
 
     # Scraping
     scraper_user_agent: str = "NewsRAGBot/1.0"

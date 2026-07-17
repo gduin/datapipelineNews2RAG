@@ -29,7 +29,7 @@ class SentenceTransformersEmbedder(Embedder):
             ) from exc
 
         try:
-            embeddings = model.encode(texts, show_progress_bar=False)
+            embeddings = model.encode(texts, show_progress_bar=False).tolist()
         except Exception as exc:
             raise EmbeddingError(
                 f"model.encode failed for {len(texts)} texts: {exc}"
@@ -39,4 +39,5 @@ class SentenceTransformersEmbedder(Embedder):
             raise EmbeddingError(
                 f"model returned {len(embeddings)} embeddings for {len(texts)} inputs"
             )
-        return [list(map(float, vec)) for vec in embeddings]
+        #return [list(map(float, vec)) for vec in embeddings]
+        return embeddings

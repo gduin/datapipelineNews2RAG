@@ -1,7 +1,7 @@
-jobmanager.rpc.address: dc669d982b7f
+jobmanager.rpc.address: b94dc02fbe9e
 jobmanager.rpc.port: 6123
-jobmanager.memory.process.size: 2048m
-taskmanager.memory.process.size: 4096m
+jobmanager.memory.process.size: 512m
+taskmanager.memory.process.size: 1024m
 taskmanager.numberOfTaskSlots: 2
 parallelism.default: 1
 state.backend: rocksdb

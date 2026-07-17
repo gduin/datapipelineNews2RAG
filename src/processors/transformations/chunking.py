@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
+import uuid
 
 from src.common.logging import get_logger
 from src.processors.base import ChunkStep
@@ -59,7 +60,7 @@ class SentenceChunker(ChunkStep):
 
             result = [
                 NewsChunk(
-                    chunk_id=hashlib.sha1(f"{item.url}#{i}".encode()).hexdigest(),
+                    chunk_id=str(uuid.UUID(hashlib.sha1(f"{item.url}#{i}".encode()).hexdigest()[:32])),
                     url=item.url,
                     title=item.title,
                     chunk_text=chunk,

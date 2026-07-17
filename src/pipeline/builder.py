@@ -52,13 +52,7 @@ class PipelineBuilder:
             stream = self._env.from_source(
                 source, WatermarkStrategy.no_watermarks(), "news-source"
             )
-            stream = self._env.from_source(
-                source,
-                WatermarkStrategy.no_watermarks(),
-                "news-source",
-            )
 
-            parsed = stream.map(json.loads)
             stream.print("news-stream")
         except Exception:
             self._logger.critical("pipeline_build_failed", exc_info=True)

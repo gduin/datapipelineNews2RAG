@@ -2,9 +2,9 @@ annotated-types==0.7.0
     # via pydantic
 apache-beam==2.43.0
     # via apache-flink
-apache-flink==1.17.1
+apache-flink==1.18.1
     # via -r infra/flink-job/requirements.txt
-apache-flink-libraries==1.17.1
+apache-flink-libraries==1.18.1
     # via apache-flink
 avro-python3==1.9.2.1
     # via apache-flink
@@ -130,3 +130,17 @@ urllib3==2.7.0
 qdrant-client==1.18.0
 zstandard==0.25.0
     # via apache-beam
+
+# --- Runtime deps needed by the Flink ProcessFunction UDF on taskmanagers ---
+# (not pulled in by apache-flink itself; added so ProcessFunction.open() works)
+# Pinned to 3.0.0 because newer versions pull transformers 5.x which uses
+# np.ndarray[...] runtime subscript syntax requiring Python >=3.11; the Flink
+# image ships Python 3.10.
+sentence-transformers==3.0.0
+    # via src.processors.embeddings.sentence_transformers_embedder
+transformers==4.41.2
+    # via sentence-transformers (pin older for Python 3.10 compatibility)
+lxml>=5.2.0
+    # via src.processors.transformations.cleaning
+pyyaml>=6.0.1
+    # via src.common.config

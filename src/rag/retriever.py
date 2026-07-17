@@ -26,14 +26,18 @@ class NewsRetriever:
 
     def search(self, query: str, top_k: int = 5) -> list[RetrievedDoc]:
         vector = self._embedder.embed_batch([query])[0]
-        results = self._client.search(
-            collection_name=self._collection, query_vector=vector, limit=top_k
+        results = self._client.query_points(
+            collection_name=self._collection,
+            query=vector,
+            limit=top_k,
+            with_payload=True,
         )
+        print(results)
         return [
             RetrievedDoc(
                 url=p.payload.get("url", ""),
                 title=p.payload.get("title"),
                 chunk_text=p.payload.get("chunk_text", ""),
                 score=p.score or 0.0,
-            ) for p in results
+            ) for p in results.points
         ]

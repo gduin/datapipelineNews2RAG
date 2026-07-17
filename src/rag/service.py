@@ -24,8 +24,9 @@ class RAGService:
             "\"I don't have enough information.\""
         )
 
-    def ask(self, question: str) -> RagAnswer:
-        docs = self._retriever.search(question, top_k=self._top_k)
+    def ask(self, question: str, top_k: int | None = None) -> RagAnswer:
+        k = top_k if top_k is not None else self._top_k
+        docs = self._retriever.search(question, top_k=k)
         if not docs:
             return RagAnswer(answer="I don't have enough information.", sources=[])
         context = build_context(docs)

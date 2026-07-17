@@ -24,6 +24,9 @@ RUN wget https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.3/postgre
 # 2.4. Create archive with connector JARs for upload to Flink cluster
 RUN mkdir -p /opt/flink-job && python3 -c "import zipfile; z=zipfile.ZipFile('/opt/flink-job/connectors.jar', 'w'); import glob; [z.write(f) for f in glob.glob('/opt/flink/lib/flink-sql-connector-kafka-3.0.1-1.18.jar') + glob.glob('/opt/flink/lib/flink-connector-jdbc-3.1.2-1.18.jar') + glob.glob('/opt/flink/lib/postgresql-42.7.3.jar')]"
 
+
+RUN wget https://repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.5-11/zstd-jni-1.5.5-11.jar -P /opt/flink/lib/
+
 # 3. Copy your requirements file from your project root
 COPY infra/flink-job/requirements.txt /opt/flink-job/requirements.txt
 

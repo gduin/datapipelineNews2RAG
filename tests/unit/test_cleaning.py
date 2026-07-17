@@ -15,7 +15,7 @@ def test_strips_html():
     assert out.tags == ["news"]
 
 
-def test_none_passthrough():
+def test_item_with_empty_text_returns_none():
     item = NewsItem(source_id="s", url="https://x.test", fetched_at=1)
     out = NormalizeStep().process(item)
-    assert out and out.title is None
+    assert out is None

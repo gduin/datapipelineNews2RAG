@@ -15,6 +15,8 @@ from src.pipeline.builder import PipelineBuilder, PipelineConfig
 from src.processors.embeddings.factory import build_embedder
 from src.processors.sinks.qdrant_sink import QdrantSink
 from src.processors.sinks.base import VectorRecord
+from src.processors.transformations.chunking import SentenceChunker
+from src.processors.transformations.cleaning import NormalizeStep
 from src.schemas.models import NewsItem
 
 
@@ -29,9 +31,12 @@ class ProcessFunction(MapFunction):
         self._logger = None
 
     def open(self, runtime_context):  # noqa: ANN001
+        configure_logging(get_settings().log_level)
         self._logger = get_logger(__name__)
         self._logger.info("process_function_opening")
         try:
+            self._normalize = NormalizeStep()
+            self._chunker = SentenceChunker()
             self._embedder = build_embedder()
             self._sink = QdrantSink()
             self._sink.ensure_collection(get_settings().qdrant_vector_size)

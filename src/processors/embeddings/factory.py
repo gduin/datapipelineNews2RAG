@@ -15,11 +15,7 @@ log = logging.getLogger(__name__)
 def build_embedder() -> Embedder:
     settings = get_settings()
     provider = settings.embedding_provider
-    log.info(
-        "building_embedder",
-        provider=provider,
-        model=settings.embedding_model,
-    )
+    log.info("building_embedder provider=%s model=%s", provider, settings.embedding_model)
     try:
         match provider:
             case "sentence_transformers":

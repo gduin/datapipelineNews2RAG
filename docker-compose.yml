@@ -166,10 +166,26 @@ services:
     container_name: flink-jobmanager
     ports: ["8083:8081"]
     command: jobmanager
+    env_file: .env
     environment:
-      FLINK_CONF: /opt/flink/conf/flink-conf.yaml
+      JOB_MANAGER_RPC_ADDRESS: flink-jobmanager
+      PYTHONPATH: /opt/flink-job
+      KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      FLINK_PROPERTIES: |
+        jobmanager.memory.process.size: 2048m
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///flink-checkpoints
+        state.savepoints.dir: file:///flink-savepoints
+        execution.checkpointing.interval: 60000
+        execution.checkpointing.mode: EXACTLY_ONCE
+        execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+        restart-strategy: exponential-delay
+        restart-strategy.exponential-delay.initial-backoff: 10s
+        restart-strategy.exponential-delay.max-backoff: 5min
+        restart-strategy.exponential-delay.reset-backoff-threshold: 1h
     volumes:
-      - ./configs/flink:/opt/flink/conf
+      - ./src:/opt/flink-job/src:ro
+      - ./.env:/opt/flink-job/.env:ro
       - flink-checkpoints:/flink-checkpoints
       - flink-savepoints:/flink-savepoints
     networks: 
@@ -187,10 +203,22 @@ services:
     #container_name: flink-taskmanager
     command: taskmanager
     depends_on: [flink-jobmanager]
+    env_file: .env
     environment:
-      TASKMANAGER_NUMTASKSLOTS: 2
+      JOB_MANAGER_RPC_ADDRESS: flink-jobmanager
+      TASK_MANAGER_NUMBER_OF_TASK_SLOTS: 2
+      PYTHONPATH: /opt/flink-job
+      KAFKA_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      FLINK_PROPERTIES: |
+        taskmanager.memory.process.size: 4096m
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///flink-checkpoints
+        execution.checkpointing.interval: 60000
+        execution.checkpointing.mode: EXACTLY_ONCE
+        restart-strategy: exponential-delay
     volumes:
-      - ./configs/flink:/opt/flink/conf
+      - ./src:/opt/flink-job/src:ro
+      - ./.env:/opt/flink-job/.env:ro
       - flink-checkpoints:/flink-checkpoints
     deploy:
       replicas: 1
@@ -246,6 +274,31 @@ services:
     env_file: .env
     depends_on: [qdrant, kafka-1]
     networks: 
+      - news-rag-net
+
+  # Local LLM via llama.cpp server (OpenAI-compatible API at /v1).
+  # This service is opt-in: it only starts with `docker compose --profile llm up`.
+  # Without it, set LLM_PROVIDER=stub (or openai with a real OPENAI_API_KEY) and
+  # rag-api will still work; rag-api will just not depend on llama-server being up.
+  llama-server:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: llama-server
+    profiles: ["llm"]
+    ports: ["8080:8080"]
+    command:
+      - --model
+      - /models/gemma-4-12b-it-UD-Q4_K_XL.gguf
+      - --host
+      - "0.0.0.0"
+      - --verbose
+      - --metrics
+      - --port
+      - "8080"
+    volumes:
+      # Adjust this path to wherever your GGUF models are stored on the host.
+      - /home/test/Documents/agents/models:/models:ro
+    restart: unless-stopped
+    networks:
       - news-rag-net
 
   prometheus:

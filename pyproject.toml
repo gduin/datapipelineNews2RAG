@@ -48,6 +48,11 @@ ignore = ["D104","D100","D107"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --cov=src"
+markers = [
+    "unit: Unit tests (no external dependencies)",
+    "integration: Integration tests (require Qdrant/Kafka running)",
+    "e2e: End-to-end tests (require full Docker Compose stack)",
+]
 
 [tool.mypy]
 python_version = "3.11"
